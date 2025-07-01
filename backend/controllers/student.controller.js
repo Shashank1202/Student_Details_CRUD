@@ -15,7 +15,7 @@ exports.getStudentById= async (req, res) => {
 
 //Create new student
 exports.createStudent= async (req, res) => {
-    const { name, email, course, dob}= req.body;
+    const {name, email, course, dob}= req.body;
     const result= await db.query(
     'INSERT INTO students (name, email, course, dob) VALUES ($1, $2, $3, $4) RETURNING *',
     [name, email, course, dob],
