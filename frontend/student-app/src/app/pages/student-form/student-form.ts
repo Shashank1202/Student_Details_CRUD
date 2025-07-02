@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-student-form',
@@ -30,39 +31,59 @@ export class StudentForm implements OnInit{
   private fb: FormBuilder,
   private studentService: StudentService,
   private router: Router,
-  private snackBar: MatSnackBar
+  private snackBar: MatSnackBar,
+  private route: ActivatedRoute
   ){}
 
-  ngOnInit(){
+  ngOnInit() {
+  this.studentForm = this.fb.group({
+    name: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    course: ['', Validators.required],
+    dob: ['', Validators.required]
+  });
 
-    this.studentForm= this.fb.group({
-      name: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      course: ['', Validators.required],
-      dob: ['', Validators.required]
-    });
-      
-  }
-
-  onSubmit() {
-  console.log('Form submitted', this.studentForm.value);
-  if (this.studentForm.valid) {
-    this.studentService.addStudent(this.studentForm.value).subscribe({
-      next: () => {
-        this.snackBar.open('Student added successfully!', 'Close', {
-          duration: 3000, // 3 seconds
-        });
-        this.router.navigate(['/students']);
-      },
-      error: (err) => {
-        console.error('Failed to add student:', err);
-        this.snackBar.open('Failed to add student. Try again.', 'Close', {
-          duration: 3000,
-        });
-      }
+  const idParam = this.route.snapshot.paramMap.get('id');
+  if (idParam) {
+    const studentId = Number(idParam);
+    this.studentService.getStudentById(studentId).subscribe(student => {
+      // Patch form with existing data
+      this.studentForm.patchValue(student);
     });
   }
 }
 
 
+ onSubmit() {
+  if (this.studentForm.valid) {
+    const idParam = this.route.snapshot.paramMap.get('id');
+
+    if (idParam) {
+      // 🔁 Edit Mode
+      const studentId = Number(idParam);
+      this.studentService.updateStudent(studentId, this.studentForm.value).subscribe({
+        next: () => {
+          this.snackBar.open('Student updated successfully!', 'Close', { duration: 3000 });
+          this.router.navigate(['/students']);
+        },
+        error: (err) => {
+          console.error('Failed to update student:', err);
+          this.snackBar.open('Update failed. Try again.', 'Close', { duration: 5000 });
+        }
+      });
+    } else {
+      // ➕ Add Mode
+      this.studentService.addStudent(this.studentForm.value).subscribe({
+        next: () => {
+          this.snackBar.open('Student added successfully!', 'Close', { duration: 3000 });
+          this.router.navigate(['/students']);
+        },
+        error: (err) => {
+          console.error('Failed to add student:', err);
+          this.snackBar.open('Student email already exists. Try again.', 'Close', { duration: 5000 });
+        }
+      });
+    }
+  }
+ }
 }

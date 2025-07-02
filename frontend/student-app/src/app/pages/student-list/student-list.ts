@@ -5,7 +5,7 @@ import { Student } from '../../models/student.model';
 import { Router, RouterModule } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
-
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 
 @Component({
@@ -17,9 +17,9 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class StudentList implements OnInit {
   students: Student[] = [];
-  displayedColumns: string[] = ['id', 'name', 'email', 'course', 'date-of-birth', 'actions'];
+  displayedColumns: string[] = ['id', 'name', 'email', 'course', 'dob', 'actions'];
 
-  constructor(private studentService: StudentService, private router: Router){}
+  constructor(private studentService: StudentService, private router: Router, private snackBar: MatSnackBar){}
 
 
   ngOnInit(){
@@ -37,10 +37,13 @@ export class StudentList implements OnInit {
   }
 
   deleteStudent(id: number){
-    if(confirm("Are you sure want to delete this student?")){
-      this.studentService.deleteStudent(id).subscribe(() =>{
-        this.fetchStudents();
+  if(confirm("Are you sure want to delete this student?")){
+    this.studentService.deleteStudent(id).subscribe(() =>{
+      this.snackBar.open('Student deleted successfully', 'Close', {
+        duration: 2000
       });
-    }
+      this.fetchStudents();
+    });
   }
+}
 }
